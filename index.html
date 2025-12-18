@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #f4f4f4; }
+        h1 { color: #333; }
+        /* Make the grid look like Sudoku */
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            gap: 2px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+        input {
+            width: 40px; height: 40px;
+            font-size: 20px; text-align: center;
+            border: 1px solid #999;
+        }
+        /* Make 3x3 blocks look distinct */
+        input:nth-child(3n) { margin-right: 5px; }
+        input:nth-child(9n) { margin-right: 0; } 
+        /* (This CSS is basic, for 3x3 borders you need more complex CSS, but this works for now) */
+        
+        button {
+            padding: 10px 20px; font-size: 16px;
+            background-color: #28a745; color: white;
+            border: none; cursor: pointer;
+        }
+        button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+
+    <h1>C-Powered Sudoku Solver</h1>
+    <div id="grid-container">
+        </div>
+    <br>
+    <button onclick="sendToC()">Solve Puzzle</button>
+
+    <script>
+        // 1. Create 81 Input Boxes automatically
+        const container = document.getElementById('grid-container');
+        for (let i = 0; i < 81; i++) {
+            let input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 1; 
+            input.id = 'cell-' + i;
+            container.appendChild(input);
+        }
+
+        // 2. The Function that talks to C
+        async function sendToC() {
+            // A. Collect all numbers from the grid
+            let boardString = "";
+            for (let i = 0; i < 81; i++) {
+                let val = document.getElementById('cell-' + i).value;
+                // If empty, use '0', otherwise use the number
+                boardString += (val === "") ? "0" : val;
+            }
+
+            console.log("Sending to C:", boardString);
+
+            // B. Send to C Server (The Fetch API)
+            try {
+                // We send data in the URL: localhost:8080/?board=53007...
+                let response = await fetch("http://localhost:8080/?board=" + boardString);
+                let solvedString = await response.text();
+                
+                console.log("C replied:", solvedString);
+                
+                // C. Fill the grid with the answer
+                for (let i = 0; i < 81; i++) {
+                    document.getElementById('cell-' + i).value = solvedString[i];
+                }
+            } catch (error) {
+                alert("Error! Is your C program running?");
+            }
+        }
+    </script>
+</body>
+</html>
